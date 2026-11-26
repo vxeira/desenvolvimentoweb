@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paleta CEUB (mesmos valores do tailwind.config.js) */
+:root {
+  --ceub-roxo: #5b2c83;
+  --ceub-roxo-vivo: #7b3fb8;
+  --ceub-roxo-escuro: #3d1a5b;
+  --ceub-perigo: #c62828;
+}
+
+body {
+  font-family: 'Montserrat', 'Roboto', sans-serif;
+  background: #f8f6fb;
+}
+
+/* ---------- Materialize: campos com as cores CEUB ---------- */
+input:not([type]):focus:not([readonly]),
+input[type='text']:not(.browser-default):focus:not([readonly]),
+input[type='number']:not(.browser-default):focus:not([readonly]),
+input[type='date']:not(.browser-default):focus:not([readonly]),
+textarea.materialize-textarea:focus:not([readonly]) {
+  border-bottom: 1px solid var(--ceub-roxo);
+  box-shadow: 0 1px 0 0 var(--ceub-roxo);
+}
+
+.input-field input:focus + label,
+.input-field textarea:focus + label,
+.input-field .prefix.active {
+  color: var(--ceub-roxo) !important;
+}
+
+input::placeholder {
+  color: #a596b5;
+}
+
+select.browser-default {
+  border: 1px solid #d9cce8;
+  border-radius: 10px;
+  padding: 8px 12px;
+  height: 44px;
+  background-color: #fff;
+}
+select.browser-default:focus {
+  outline: none;
+  border-color: var(--ceub-roxo);
+  box-shadow: 0 0 0 3px rgba(91, 44, 131, 0.15);
+}
+
+/* ---------- Botões ---------- */
+.btn,
+.btn-flat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  border-radius: 999px;
+  text-transform: none;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.btn i.left,
+.btn-flat i.left {
+  float: none;
+  margin-right: 0;
+}
+
+/* O Materialize força verde-água no foco/hover: mantemos o roxo */
+.btn.tw-bg-ceub-roxo,
+.btn.tw-bg-ceub-roxo:focus {
+  background-color: var(--ceub-roxo);
+}
+.btn.tw-bg-ceub-roxo:hover {
+  background-color: var(--ceub-roxo-vivo);
+}
+.btn.tw-bg-white,
+.btn.tw-bg-white:focus {
+  background-color: #fff;
+}
+.btn.tw-bg-white:hover {
+  background-color: #f3ecfa;
+}
+.btn.tw-bg-ceub-perigo,
+.btn.tw-bg-ceub-perigo:focus {
+  background-color: var(--ceub-perigo);
+}
+.btn.tw-bg-ceub-perigo:hover {
+  background-color: #a61f1f;
+}
+.btn-flat:focus {
+  background-color: rgba(91, 44, 131, 0.08);
+}
+.btn:focus-visible,
+.btn-flat:focus-visible {
+  outline: 2px solid var(--ceub-roxo-vivo);
+  outline-offset: 2px;
+}
+
+/* Mensagens de erro do formulário */
+.input-field .helper-text.tw-text-ceub-perigo {
+  color: var(--ceub-perigo);
+}
+
+/* Barra de progresso do Materialize em roxo */
+.progress {
+  background-color: #e6d9f3;
+}
+.progress .indeterminate {
+  background-color: var(--ceub-roxo);
+}
+
+/* Entrada suave dos cards */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.surgir {
+  animation: surgir 0.35s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .surgir {
+    animation: none;
+  }
+}

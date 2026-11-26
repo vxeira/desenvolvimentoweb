@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id                     Int            @id @default(autoincrement())
+  nome                   String
+  email                  String         @unique
+  senhaHash              String         @map("senha_hash")
+  role                   String         @default("USUARIO")
+  documentoCriptografado String?        @map("documento_criptografado")
+  criadoEm               DateTime       @default(now()) @map("criado_em")
+  atualizadoEm           DateTime       @updatedAt @map("atualizado_em")
+  eventos                Evento[]
+  refreshTokens          RefreshToken[]
+
+  @@map("tbl_001_usuarios")
+}
+
+model Evento {
+  id           Int      @id @default(autoincrement())
+  titulo       String
+  descricao    String   @default("")
+  data         String
+  local        String
+  curso        String
+  vagas        Int
+  criadoPorId  Int?     @map("criado_por_id")
+  criadoPor    Usuario? @relation(fields: [criadoPorId], references: [id], onDelete: SetNull)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  @@map("tbl_002_eventos")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique @map("token_hash")
+  usuarioId Int      @map("usuario_id")
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  expiraEm  DateTime @map("expira_em")
+  revogado  Boolean  @default(false)
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  @@map("tbl_003_refresh_tokens")
+}

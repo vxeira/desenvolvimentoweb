@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend — NestJS + Prisma (cobertura ≥ 80%)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      NODE_ENV: test
+      DATABASE_URL: "file:./test.db"
+      CORS_ORIGIN: "http://127.0.0.1:5173"
+      JWT_SECRET: "ci-jwt-secret-para-testes-automatizados-min-32"
+      JWT_REFRESH_SECRET: "ci-refresh-secret-para-testes-automatizados-min-32"
+      ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npx prisma generate
+      - run: npm run test:cov
+      - run: npm run test:e2e
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cobertura-backend
+          path: backend/coverage
+
+  frontend:
+    name: Frontend — Vitest (cobertura ≥ 80%) + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
+      - run: npm run coverage
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cobertura-frontend
+          path: frontend/coverage
+
+  e2e:
+    name: E2E — Cypress (frontend + backend NestJS)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Sobe a API NestJS em segundo plano
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          DATABASE_URL: "file:/tmp/e2e.db"
+          CORS_ORIGIN: "http://127.0.0.1:5173"
+          JWT_SECRET: "ci-jwt-secret-para-testes-automatizados-min-32"
+          JWT_REFRESH_SECRET: "ci-refresh-secret-para-testes-automatizados-min-32"
+          ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        run: |
+          npm ci
+          npx prisma migrate deploy
+          npx prisma generate
+          npm run build
+          nohup npm run start:prod > /tmp/backend.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:3000/api/health && exit 0; sleep 2; done
+          echo "API não subiu"; exit 1
+      - name: Instala dependências do frontend (com o Cypress)
+        working-directory: frontend
+        run: npm ci
+      - name: Roda o Cypress (sobe o Vite, espera e executa os testes)
+        working-directory: frontend
+        env:
+          VITE_API_URL: http://127.0.0.1:3000/api
+        run: npx start-server-and-test "npm run dev -- --host 127.0.0.1" http://127.0.0.1:5173 "npx cypress run --browser chrome --config baseUrl=http://127.0.0.1:5173 --env apiUrl=http://127.0.0.1:3000/api"
+      - name: Log da API (em caso de falha)
+        if: failure()
+        run: cat /tmp/backend.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots

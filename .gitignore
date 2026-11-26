@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+.env
+__pycache__/
+*.pyc
+venv/
+.venv/
+htmlcov/
+.coverage
+.pytest_cache/
+instance/
+*.db
