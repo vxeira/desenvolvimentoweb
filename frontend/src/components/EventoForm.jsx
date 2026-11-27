@@ -29,10 +29,15 @@ export default function EventoForm({ inicial, onSalvar, onCancelar }) {
 
     setSalvando(true);
     try {
-      const { id: _id, ...resto } = dados;
-      await onSalvar({ ...resto, vagas: Number(dados.vagas) });
+      // Envia só os campos editáveis: a API rejeita propriedades extras (id, criadoPorId...)
+      const campos = Object.fromEntries(
+        Object.keys(EVENTO_VAZIO).map((campo) => [campo, dados[campo]]),
+      );
+      await onSalvar({ ...campos, vagas: Number(dados.vagas) });
     } catch (err) {
-      setErros(err.erros || { geral: err.message });
+      const errosServidor = err.erros || {};
+      const temErroDeCampo = Object.keys(errosServidor).some((campo) => campo in EVENTO_VAZIO);
+      setErros(temErroDeCampo ? errosServidor : { geral: err.message });
     } finally {
       setSalvando(false);
     }

@@ -15,7 +15,7 @@ vi.mock('../api', () => ({
 
 const evento = {
   id: 1, titulo: 'Semana de TI', descricao: 'Palestras', data: '2026-12-10',
-  local: 'Bloco 3', curso: 'Ciência da Computação', vagas: 100,
+  local: 'Bloco 3', curso: 'Ciência da Computação', vagas: 100, criadoPorId: 7,
 };
 
 describe('Header', () => {
@@ -135,13 +135,25 @@ describe('EventoForm', () => {
     });
   });
 
-  it('em modo edição preenche os campos e não envia o id', async () => {
+  it('em modo edição preenche os campos e envia só os campos editáveis', async () => {
     const onSalvar = vi.fn().mockResolvedValue();
     render(<EventoForm inicial={evento} onSalvar={onSalvar} onCancelar={vi.fn()} />);
     expect(screen.getByRole('heading', { name: 'Editar evento' })).toBeInTheDocument();
     expect(screen.getByLabelText('Título')).toHaveValue('Semana de TI');
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
-    expect(onSalvar.mock.calls[0][0]).not.toHaveProperty('id');
+    expect(onSalvar).toHaveBeenCalledWith({
+      titulo: 'Semana de TI', descricao: 'Palestras', data: '2026-12-10',
+      local: 'Bloco 3', curso: 'Ciência da Computação', vagas: 100,
+    });
+  });
+
+  it('mostra mensagem geral quando o erro do servidor não é de um campo do formulário', async () => {
+    const onSalvar = vi.fn().mockRejectedValue(
+      Object.assign(new Error('Dados inválidos'), { erros: { criadoPorId: 'property criadoPorId should not exist' } }),
+    );
+    render(<EventoForm inicial={evento} onSalvar={onSalvar} onCancelar={vi.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(await screen.findByText('Dados inválidos')).toBeInTheDocument();
   });
 
   it('exibe erros vindos do servidor', async () => {

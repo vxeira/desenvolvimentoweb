@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 5173 },
+  // 127.0.0.1 explícito: no Windows o Node resolve "localhost" só para ::1 (IPv6) e o Cypress não conecta
+  server: { port: 5173, host: '127.0.0.1' },
   test: {
     environment: 'jsdom',
     globals: true,
